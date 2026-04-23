@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Env files (real secrets)
+.env
+.env.*
+!.env.example
+
+# Data (runtime)
+data/
+input/
+reports/
+
+# IDE — keep .idea tracked per existing git state, but ignore local workspace files
+.idea/
+.idea/workspace.xml
+.idea/shelf/
+*.iml.local
+.vscode/
+
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model caches
+*.safetensors
+*.bin
+*.pt
+*.pth
+models/

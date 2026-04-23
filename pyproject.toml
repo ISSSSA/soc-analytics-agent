@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soc-agent"
+version = "0.1.0"
+description = "SOC agent for batch SIEM log analysis: clustering, classification, and LLM-driven incident recommendations."
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "siem-agent contributors" }]
+
+dependencies = [
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+]
+
+[project.optional-dependencies]
+agent = [
+    "httpx>=0.27",
+    "tenacity>=8.2",
+    "diskcache>=5.6",
+    "structlog>=24.1",
+    "typer>=0.12",
+    "rich>=13.7",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "hdbscan>=0.8.33",
+    "chromadb>=0.4.22",
+    "sentence-transformers>=2.3",
+    "litellm>=1.35",
+    "langchain-text-splitters>=0.0.1",
+]
+inference = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "transformers>=4.38",
+    "slowapi>=0.1.9",
+    "prometheus-client>=0.20",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-httpx>=0.30",
+    "freezegun>=1.4",
+    "mypy>=1.8",
+    "ruff>=0.3",
+]
+
+[project.scripts]
+soc-agent = "soc_agent.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["soc_agent*", "inference_service*"]
+exclude = ["tests*", "data*", "input*", "reports*", "playbooks*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pydantic.*",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "PL", "RUF", "SIM", "C4"]
+ignore = [
+    "PLR0913", # too many arguments
+    "PLR2004", # magic numbers in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004", "S101"]
