@@ -1,0 +1,68 @@
+# docker-compose for the full SOC agent stack.
+#
+# Two services:
+#   - inference_service — SecBERT on GPU (FastAPI, :8001)
+#   - agent            — Python CLI (batch analysis)
+#
+# Usage:
+#   cp .env.example .env   # fill in INFERENCE_SERVICE_API_KEY + LLM API key
+#   docker compose up -d inference_service
+#   docker compose run --rm agent soc-agent health
+#   docker compose run --rm agent soc-agent index-playbooks
+#   docker compose run --rm agent soc-agent analyze /app/input/logs.jsonl --markdown
+#
+# Variant B (agent local, GPU remote):
+#   Skip this file entirely on the agent machine and set INFERENCE_SERVICE_URL
+#   in your local .env to https://<vast-or-runpod-host>:8001
+
+services:
+  inference_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    image: soc-agent-inference:latest
+    container_name: soc-agent-inference
+    env_file: .env
+    environment:
+      # Rename: the agent side uses INFERENCE_SERVICE_API_KEY, the server
+      # reads INFERENCE_API_KEY. Map here so one value lives in .env.
+      - INFERENCE_API_KEY=${INFERENCE_SERVICE_API_KEY}
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data/models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    image: soc-agent:latest
+    container_name: soc-agent-cli
+    env_file: .env
+    environment:
+      # Override so the agent reaches the sibling service by its compose name.
+      - INFERENCE_SERVICE_URL=http://inference_service:8001
+    depends_on:
+      inference_service:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./playbooks:/app/playbooks
+      - ./input:/app/input
+      - ./reports:/app/reports
+    # The agent is a short-lived CLI — `run --rm` instead of `up`.
+    profiles: ["cli"]

@@ -1,5 +1,3 @@
-"""Unit tests for soc_agent.config."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,7 +10,6 @@ from soc_agent.config import Settings, get_settings
 
 @pytest.fixture(autouse=True)
 def _clean_env_and_cache(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Each test starts with no relevant env vars and no cached Settings."""
     for var in [
         "SECBERT_MODEL_PATH",
         "INFERENCE_SERVICE_URL",
@@ -32,7 +29,6 @@ def _clean_env_and_cache(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Non
         "LOG_LEVEL",
     ]:
         monkeypatch.delenv(var, raising=False)
-    # Avoid picking up a real .env from repo root during tests.
     monkeypatch.chdir(tmp_path)
     get_settings.cache_clear()
 
@@ -86,7 +82,7 @@ class TestEnvLoading:
 
     def test_ignores_unknown_env_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("COMPLETELY_UNRELATED_VAR", "foo")
-        s = Settings()  # must not raise
+        s = Settings()
         assert s.llm_model == "anthropic/claude-haiku-4-5"
 
 
@@ -130,7 +126,7 @@ class TestHelpers:
     def test_ensure_dirs_idempotent(self, tmp_path: Path) -> None:
         s = Settings(chroma_persist_dir=tmp_path / "c", cache_dir=tmp_path / "k")
         s.ensure_dirs()
-        s.ensure_dirs()  # must not raise
+        s.ensure_dirs()
 
     def test_get_settings_is_cached(self) -> None:
         assert get_settings() is get_settings()

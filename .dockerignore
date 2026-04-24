@@ -1,0 +1,29 @@
+.git/
+.github/
+.idea/
+.vscode/
+.venv/
+venv/
+env/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Runtime state — must not leak into images
+.env
+data/
+input/
+reports/
+
+# Large model caches
+*.safetensors
+*.bin
+*.pt
+*.pth
+models/

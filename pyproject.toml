@@ -79,7 +79,21 @@ select = ["E", "F", "W", "I", "B", "UP", "PL", "RUF", "SIM", "C4"]
 ignore = [
     "PLR0913", # too many arguments
     "PLR2004", # magic numbers in tests
+    "PLC0415", # deferred imports (we load torch/transformers lazily in providers)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004", "S101"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI idioms: Depends/Query/Path/Body in default arguments is canonical.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "fastapi.Header",
+    "fastapi.Security",
+    "typer.Argument",
+    "typer.Option",
+]

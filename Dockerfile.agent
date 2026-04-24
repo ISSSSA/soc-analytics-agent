@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1.6
+# CPU agent: CLI + pipeline (clustering, RAG, LLM orchestration).
+# Build: docker build -f Dockerfile.agent -t soc-agent .
+# Run:   docker run --rm --env-file .env -v $PWD/input:/app/input \
+#          -v $PWD/reports:/app/reports soc-agent analyze /app/input/logs.jsonl --markdown
+
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# hdbscan and a few numeric wheels still need a C toolchain on slim images.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential gcc curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip uv
+
+# Install Python deps first (cache-friendly).
+COPY pyproject.toml README.md ./
+COPY soc_agent/__init__.py ./soc_agent/
+RUN uv pip install --system ".[agent]"
+
+# Copy the rest of the package and the sample playbooks.
+COPY soc_agent/ ./soc_agent/
+COPY playbooks/ ./playbooks/
+
+# Runtime volumes for data/cache, reports, inputs.
+RUN mkdir -p /app/data /app/input /app/reports
+
+HEALTHCHECK --interval=60s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import soc_agent; print(soc_agent.__version__)" || exit 1
+
+ENTRYPOINT ["soc-agent"]
+CMD ["--help"]

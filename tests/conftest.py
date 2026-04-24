@@ -1,5 +1,3 @@
-"""Shared pytest fixtures."""
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -10,7 +8,6 @@ import pytest
 
 @pytest.fixture
 def sample_log_dict() -> dict[str, Any]:
-    """One realistic SIEM record, matching Advanced_SIEM_Dataset fields."""
     return {
         "event_id": "evt-001",
         "timestamp": "2025-03-15T10:23:00Z",
@@ -47,7 +44,6 @@ def sample_log_dict() -> dict[str, Any]:
 
 @pytest.fixture
 def sample_cluster_kwargs() -> dict[str, Any]:
-    """Minimal kwargs to build a Cluster."""
     t0 = datetime(2025, 3, 15, 10, 23, 0, tzinfo=UTC)
     t1 = datetime(2025, 3, 15, 10, 47, 12, tzinfo=UTC)
     return {

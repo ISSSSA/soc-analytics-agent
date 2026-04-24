@@ -1,5 +1,3 @@
-"""Unit tests for soc_agent.schemas."""
-
 from __future__ import annotations
 
 import json
@@ -30,10 +28,6 @@ from soc_agent.schemas import (
     Recommendation,
     SeverityLevel,
 )
-
-# --------------------------------------------------------------------------- #
-# Enums                                                                        #
-# --------------------------------------------------------------------------- #
 
 
 class TestEnums:
@@ -68,11 +62,6 @@ class TestEnums:
     def test_priority_normalized(self) -> None:
         assert Priority("HIGH") is Priority.HIGH
         assert Priority("informational") is Priority.INFORMATIONAL
-
-
-# --------------------------------------------------------------------------- #
-# LogEntry                                                                     #
-# --------------------------------------------------------------------------- #
 
 
 class TestLogEntry:
@@ -205,11 +194,6 @@ class TestLogEntry:
         assert s["dst_ip"] == "10.0.0.5"
 
 
-# --------------------------------------------------------------------------- #
-# Inference IO                                                                 #
-# --------------------------------------------------------------------------- #
-
-
 class TestInferenceIO:
     def test_embeddings_request_defaults(self) -> None:
         req = EmbeddingsRequest(texts=["hello"])
@@ -259,11 +243,6 @@ class TestInferenceIO:
         assert h.num_classes is None
 
 
-# --------------------------------------------------------------------------- #
-# Aggregation                                                                  #
-# --------------------------------------------------------------------------- #
-
-
 class TestAggregation:
     def test_dominant_class_alias_in_out(self) -> None:
         dc = DominantClass.model_validate(
@@ -272,7 +251,6 @@ class TestAggregation:
         assert dc.class_name == "credential_stuffing"
         dumped = dc.model_dump(by_alias=True)
         assert dumped["class"] == "credential_stuffing"
-        # Without by_alias: uses field name
         assert dc.model_dump()["class_name"] == "credential_stuffing"
 
     def test_dominant_class_forbids_extra(self) -> None:
@@ -300,11 +278,6 @@ class TestAggregation:
     def test_cluster_stats(self) -> None:
         cs = ClusterStats(cluster_id=-1, size=1, log_indices=[5])
         assert cs.cluster_id == -1
-
-
-# --------------------------------------------------------------------------- #
-# Recommendation (LLM strict output)                                           #
-# --------------------------------------------------------------------------- #
 
 
 class TestRecommendation:
@@ -338,7 +311,6 @@ class TestRecommendation:
             Recommendation.model_validate(sample_recommendation_kwargs)
 
     def test_json_schema_strict_compatible(self) -> None:
-        """Every field must appear in `required` and `additionalProperties` must be false."""
         schema = Recommendation.model_json_schema()
         assert schema.get("additionalProperties") is False
         required = set(schema["required"])
@@ -359,11 +331,6 @@ class TestRecommendation:
         assert r.priority is Priority.HIGH
 
 
-# --------------------------------------------------------------------------- #
-# PlaybookChunk                                                                #
-# --------------------------------------------------------------------------- #
-
-
 class TestPlaybookChunk:
     def test_construct(self) -> None:
         pc = PlaybookChunk(
@@ -376,11 +343,6 @@ class TestPlaybookChunk:
             file_hash="abc123",
         )
         assert pc.mitre_techniques == ["T1110.004"]
-
-
-# --------------------------------------------------------------------------- #
-# IncidentReport + PipelineResult                                              #
-# --------------------------------------------------------------------------- #
 
 
 class TestIncidentReport:
@@ -430,7 +392,6 @@ class TestIncidentReport:
         ir = self._build(sample_cluster_kwargs, sample_recommendation_kwargs)
         dumped = json.loads(ir.model_dump_json(by_alias=True))
         assert dumped["dominant_classes"][0]["class"] == "credential_stuffing"
-        # Can re-parse (alias → field name via populate_by_name)
         again = IncidentReport.model_validate(dumped)
         assert again.cluster_id == ir.cluster_id
 
@@ -479,11 +440,6 @@ class TestPipelineResult:
                     model="x", total_cost_usd=0.0, total_tokens_in=0, total_tokens_out=0
                 ),
             )
-
-
-# --------------------------------------------------------------------------- #
-# Timezone handling                                                            #
-# --------------------------------------------------------------------------- #
 
 
 def test_timestamp_parses_iso_with_z(sample_log_dict: dict[str, Any]) -> None:

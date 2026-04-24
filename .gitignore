@@ -33,8 +33,6 @@ reports/
 
 # IDE — keep .idea tracked per existing git state, but ignore local workspace files
 .idea/
-.idea/workspace.xml
-.idea/shelf/
 *.iml.local
 .vscode/
 

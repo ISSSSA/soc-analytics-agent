@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1.6
+# Inference service: FastAPI + transformers on CUDA 12.1.
+# Build: docker build -f Dockerfile.inference -t soc-agent-inference .
+# Run (GPU): docker run --rm --gpus all -p 8001:8001 \
+#              -e INFERENCE_API_KEY=<token> -e SECBERT_MODEL_PATH=issssssaaaa/secbert-siem \
+#              soc-agent-inference
+#
+# --workers 1 is MANDATORY: the model must be loaded once into GPU memory.
+
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/models/.hf \
+    TRANSFORMERS_CACHE=/models/.hf
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.11 python3.11-venv python3-pip curl \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install PyTorch wheel matching CUDA 12.1 first for better layer caching.
+RUN python -m pip install --upgrade pip uv \
+    && python -m uv pip install --system \
+       torch==2.3.0 --index-url https://download.pytorch.org/whl/cu121
+
+# Copy and install the inference package (base + [inference] extras).
+COPY pyproject.toml README.md ./
+COPY soc_agent/schemas.py ./soc_agent/schemas.py
+COPY soc_agent/__init__.py ./soc_agent/__init__.py
+COPY inference_service/ ./inference_service/
+RUN python -m uv pip install --system ".[inference]"
+
+EXPOSE 8001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD curl -f http://localhost:8001/health || exit 1
+
+CMD ["uvicorn", "inference_service.server:app", \
+     "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
