@@ -129,9 +129,9 @@ class LogEntry(BaseModel):
     event_id: str
     timestamp: datetime
     event_type: EventType
-    severity: SeverityLevel
+    severity: SeverityLevel | None = None
     description: str = Field(..., min_length=1)
-    raw_log: str | None = None
+    raw_log: str
 
     advanced_metadata: AdvancedMetadata = Field(default_factory=AdvancedMetadata)
     behavioral_analytics: BehavioralAnalytics = Field(default_factory=BehavioralAnalytics)
