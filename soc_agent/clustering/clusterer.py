@@ -42,7 +42,6 @@ class HDBSCANClusterer:
         self._normalize = normalize
 
     def cluster(self, embeddings: np.ndarray) -> ClusterResult:
-        """Cluster an (N, D) float array; L2-normalizes when configured so euclidean ≈ cosine."""
         if embeddings.size == 0:
             return ClusterResult(
                 labels=np.empty(0, dtype=np.int64),

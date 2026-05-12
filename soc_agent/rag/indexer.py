@@ -55,7 +55,6 @@ class PlaybookIndexer:
         )
 
     def index(self, rebuild: bool = False) -> IndexStats:
-        """(Re)build the playbook index; skips files whose hash is unchanged unless `rebuild`."""
         if not self._playbooks_dir.exists():
             raise FileNotFoundError(self._playbooks_dir)
 
