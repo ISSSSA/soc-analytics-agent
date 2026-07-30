@@ -41,6 +41,7 @@ def _make_log(
             "event_type": event_type,
             "severity": severity,
             "description": f"description {idx}",
+            "raw_log": f"CEF:0|Vendor|SIEM|1.0|{idx}|{event_type}|5|src={src_ip}",
             "src_ip": src_ip,
             "user": user,
             "action": action,

@@ -50,7 +50,7 @@ class _Dependencies:
 
 
 class SOCPipeline:
-    """End-to-end SOC pipeline orchestrator: embed → cluster → classify → recommend."""
+    """Оркестратор сквозного конвейера: embed -> cluster -> classify -> recommend."""
 
     def __init__(
         self,

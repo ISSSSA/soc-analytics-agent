@@ -12,6 +12,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from soc_agent.recommendations.llm_client import (
     LLMClient,
     LLMPermanentError,
+    _extract_json,
+    build_openrouter_headers,
 )
 
 
@@ -299,6 +301,147 @@ class TestConcurrency:
 
         assert max_seen <= 2
         assert max_seen > 0
+
+
+class TestPlainTextFallback:
+    @pytest.mark.asyncio
+    async def test_falls_back_to_plain_text_on_double_bad_request(self) -> None:
+        valid = json.dumps({"answer": "plain-ok", "confidence": 0.8})
+        bad_req = litellm.BadRequestError(
+            message="not supported", model="test", llm_provider="test",
+        )
+        mock_acomp = AsyncMock(
+            side_effect=[bad_req, bad_req, _fake_response(valid)],
+        )
+        with (
+            patch("litellm.acompletion", mock_acomp),
+            patch("litellm.completion_cost", return_value=0.0),
+        ):
+            client = LLMClient()
+            result = await client.generate_structured("sys", "user", SampleSchema)
+
+        assert result.answer == "plain-ok"
+        assert mock_acomp.call_count == 3
+        third_kwargs = mock_acomp.call_args_list[2].kwargs
+        assert "response_format" not in third_kwargs
+
+    @pytest.mark.asyncio
+    async def test_plain_text_extracts_json_from_markdown_fence(self) -> None:
+        wrapped = '```json\n{"answer": "fenced", "confidence": 0.5}\n```'
+        bad_req = litellm.BadRequestError(
+            message="no", model="test", llm_provider="test",
+        )
+        mock_acomp = AsyncMock(
+            side_effect=[bad_req, bad_req, _fake_response(wrapped)],
+        )
+        with (
+            patch("litellm.acompletion", mock_acomp),
+            patch("litellm.completion_cost", return_value=0.0),
+        ):
+            client = LLMClient()
+            result = await client.generate_structured("sys", "user", SampleSchema)
+
+        assert result.answer == "fenced"
+
+    @pytest.mark.asyncio
+    async def test_plain_text_extracts_json_from_prose(self) -> None:
+        prose = 'Here is the answer:\n{"answer": "embedded", "confidence": 0.3}\nHope this helps!'
+        bad_req = litellm.BadRequestError(
+            message="no", model="test", llm_provider="test",
+        )
+        mock_acomp = AsyncMock(
+            side_effect=[bad_req, bad_req, _fake_response(prose)],
+        )
+        with (
+            patch("litellm.acompletion", mock_acomp),
+            patch("litellm.completion_cost", return_value=0.0),
+        ):
+            client = LLMClient()
+            result = await client.generate_structured("sys", "user", SampleSchema)
+
+        assert result.answer == "embedded"
+
+    @pytest.mark.asyncio
+    async def test_plain_text_permanent_after_retries(self) -> None:
+        bad_req = litellm.BadRequestError(
+            message="no", model="test", llm_provider="test",
+        )
+        garbage = "I cannot produce JSON."
+        mock_acomp = AsyncMock(
+            side_effect=[bad_req, bad_req, _fake_response(garbage), _fake_response(garbage)],
+        )
+        with (
+            patch("litellm.acompletion", mock_acomp),
+            patch("litellm.completion_cost", return_value=0.0),
+        ):
+            client = LLMClient()
+            with pytest.raises(LLMPermanentError, match="plain-text"):
+                await client.generate_structured("sys", "user", SampleSchema)
+
+
+class TestExtractJson:
+    def test_fenced_code_block(self) -> None:
+        text = '```json\n{"a": 1}\n```'
+        assert _extract_json(text) == '{"a": 1}'
+
+    def test_fenced_without_lang(self) -> None:
+        text = '```\n{"a": 1}\n```'
+        assert _extract_json(text) == '{"a": 1}'
+
+    def test_bare_json(self) -> None:
+        text = '{"a": 1}'
+        assert _extract_json(text) == '{"a": 1}'
+
+    def test_json_with_surrounding_prose(self) -> None:
+        text = 'Here:\n{"a": 1}\nDone.'
+        assert _extract_json(text) == '{"a": 1}'
+
+    def test_no_json_returns_stripped(self) -> None:
+        text = "  no json here  "
+        assert _extract_json(text) == "no json here"
+
+
+class TestBuildOpenRouterHeaders:
+    def test_both_set(self) -> None:
+        h = build_openrouter_headers(app_name="soc-agent", site_url="https://example.com")
+        assert h == {"HTTP-Referer": "https://example.com", "X-Title": "soc-agent"}
+
+    def test_only_app_name(self) -> None:
+        h = build_openrouter_headers(app_name="soc-agent")
+        assert h == {"X-Title": "soc-agent"}
+
+    def test_none_returns_empty(self) -> None:
+        assert build_openrouter_headers() == {}
+
+
+class TestExtraHeaders:
+    @pytest.mark.asyncio
+    async def test_headers_passed_to_litellm(self) -> None:
+        valid = json.dumps({"answer": "x", "confidence": 0.5})
+        mock_acomp = AsyncMock(return_value=_fake_response(valid))
+        with (
+            patch("litellm.acompletion", mock_acomp),
+            patch("litellm.completion_cost", return_value=0.0),
+        ):
+            client = LLMClient(extra_headers={"X-Title": "test-app"})
+            await client.generate_structured("s", "u", SampleSchema)
+
+        call_kwargs = mock_acomp.call_args.kwargs
+        assert call_kwargs["extra_headers"] == {"X-Title": "test-app"}
+
+    @pytest.mark.asyncio
+    async def test_no_headers_when_empty(self) -> None:
+        valid = json.dumps({"answer": "x", "confidence": 0.5})
+        mock_acomp = AsyncMock(return_value=_fake_response(valid))
+        with (
+            patch("litellm.acompletion", mock_acomp),
+            patch("litellm.completion_cost", return_value=0.0),
+        ):
+            client = LLMClient()
+            await client.generate_structured("s", "u", SampleSchema)
+
+        call_kwargs = mock_acomp.call_args.kwargs
+        assert "extra_headers" not in call_kwargs
 
 
 class TestConstruction:

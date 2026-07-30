@@ -82,6 +82,7 @@ class TestLogEntry:
                 "event_type": "auth",
                 "severity": "low",
                 "description": "ok",
+                "raw_log": "CEF:0|Test|SIEM|1.0|100|auth event|3|src=10.0.0.1",
             }
         )
         assert entry.src_ip is None
@@ -97,6 +98,7 @@ class TestLogEntry:
                 "event_type": "auth",
                 "severity": "low",
                 "description": "ok",
+                "raw_log": "CEF:0|Test|SIEM|1.0|100|auth event|3|src=10.0.0.1",
                 "src_ip": empty,
                 "dst_ip": empty,
             }
@@ -138,6 +140,7 @@ class TestLogEntry:
                 "event_type": "auth",
                 "severity": "low",
                 "description": "ok",
+                "raw_log": "CEF:0|Test|SIEM|1.0|100|auth event|3|src=10.0.0.1",
                 "src_port": "",
                 "dst_port": "N/A",
             }
@@ -154,6 +157,7 @@ class TestLogEntry:
                     "event_type": "auth",
                     "severity": "low",
                     "description": "",
+                    "raw_log": "CEF:0|Test|SIEM|1.0|100|auth|3|src=10.0.0.1",
                 }
             )
         assert "description" in str(ei.value)
@@ -166,6 +170,7 @@ class TestLogEntry:
                 "event_type": "auth",
                 "severity": "low",
                 "description": "ok",
+                "raw_log": "CEF:0|Test|SIEM|1.0|100|auth event|3|src=10.0.0.1",
                 "custom_siem_field": "whatever",
             }
         )
@@ -180,6 +185,7 @@ class TestLogEntry:
                 "event_type": "auth",
                 "severity": "low",
                 "description": "ok",
+                "raw_log": "CEF:0|Test|SIEM|1.0|100|auth event|3|src=10.0.0.1",
                 "advanced_metadata": {"risk_score": 0.5, "future_field": 123},
             }
         )

@@ -29,7 +29,7 @@ from soc_agent.pipeline import SOCPipeline
 from soc_agent.rag.indexer import PlaybookIndexer
 from soc_agent.rag.retriever import PlaybookRetriever
 from soc_agent.recommendations.generator import RecommendationGenerator
-from soc_agent.recommendations.llm_client import LLMClient
+from soc_agent.recommendations.llm_client import LLMClient, build_openrouter_headers
 from soc_agent.schemas import PipelineResult
 
 logger = logging.getLogger(__name__)
@@ -151,6 +151,7 @@ def _check_llm_config(settings: Settings) -> tuple[str, bool, str]:
         "anthropic": "ANTHROPIC_API_KEY",
         "openai": "OPENAI_API_KEY",
         "deepseek": "DEEPSEEK_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
     }
     expected = env_map.get(provider)
     if expected and not os.environ.get(expected):
@@ -262,12 +263,17 @@ def _build_pipeline(settings: Settings, *, include_noise: bool) -> SOCPipeline:
         chroma_persist_dir=settings.chroma_persist_dir,
         embedding_model=settings.embedding_model,
     )
+    extra_headers = build_openrouter_headers(
+        app_name=settings.openrouter_app_name,
+        site_url=settings.openrouter_site_url,
+    )
     llm = LLMClient(
         model=settings.llm_model,
         max_concurrent=settings.llm_max_concurrent,
         temperature=settings.llm_temperature,
         max_tokens=settings.llm_max_tokens,
         timeout=settings.llm_timeout,
+        extra_headers=extra_headers or None,
     )
     generator = RecommendationGenerator(llm_client=llm, retriever=retriever)
 

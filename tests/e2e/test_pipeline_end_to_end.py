@@ -88,6 +88,7 @@ def _make_logs_and_vectors() -> tuple[list[dict[str, Any]], dict[str, np.ndarray
                 "event_type": scenario["event_type"],
                 "severity": scenario["severity"],
                 "description": desc,
+                "raw_log": f"CEF:0|Vendor|SIEM|1.0|{scenario['prefix']}{i}|{scenario['action']}|5|src={scenario['src_ip_template'].format(i=(i % 250) + 1)}",
                 "src_ip": scenario["src_ip_template"].format(i=(i % 250) + 1),
                 "user": scenario["user"],
                 "action": scenario["action"],
@@ -108,6 +109,7 @@ def _make_logs_and_vectors() -> tuple[list[dict[str, Any]], dict[str, np.ndarray
             "event_type": "auth",
             "severity": "low",
             "description": desc,
+            "raw_log": f"CEF:0|Vendor|SIEM|1.0|n{i}|misc|1|user=user{i}",
             "user": f"user{i}",
         }
         logs.append(log)

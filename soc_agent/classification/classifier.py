@@ -40,7 +40,7 @@ _RETRYABLE: tuple[type[BaseException], ...] = (
 
 
 class ClassifierClient:
-    """Async client to the inference service /classify endpoint."""
+    """Асинхронный клиент эндпоинта /classify инференс-сервиса"""
 
     def __init__(
         self,

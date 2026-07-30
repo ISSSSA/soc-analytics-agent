@@ -191,6 +191,7 @@ def _write_jsonl(path: Path, n: int = 5) -> Path:
                     "event_type": "ids_alert",
                     "severity": "high",
                     "description": f"log {i}",
+                    "raw_log": f"CEF:0|Security|IDS|1.0|100{i}|Intrusion detected|8|src=10.0.0.{i}",
                 }
             )
         )

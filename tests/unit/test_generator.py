@@ -32,6 +32,7 @@ def _cluster(**overrides: Any) -> Cluster:
             "event_type": "ids_alert",
             "severity": "high",
             "description": "Failed SSH logins from 15 IPs targeting admin (T1110.004)",
+            "raw_log": "CEF:0|Vendor|IDS|1.0|1001|Failed SSH|8|src=203.0.113.42",
             "src_ip": "203.0.113.42",
             "user": "admin",
             "action": "credential_stuffing",

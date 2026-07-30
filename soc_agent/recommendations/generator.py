@@ -29,7 +29,7 @@ class GenerationResult:
 
 
 class RecommendationGenerator:
-    """Generate a structured Recommendation per cluster, with safe fallback on LLM failure."""
+    """Формирование структурированной рекомендации по кластеру (инциденту)."""
 
     def __init__(
         self,

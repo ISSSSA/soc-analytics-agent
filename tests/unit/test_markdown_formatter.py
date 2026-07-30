@@ -26,6 +26,7 @@ def _log(event_id: str = "evt-1") -> LogEntry:
             "event_type": "ids_alert",
             "severity": "high",
             "description": f"Failed SSH login — {event_id}",
+            "raw_log": f"CEF:0|Vendor|IDS|1.0|{event_id}|Failed SSH|8|src=203.0.113.42",
             "src_ip": "203.0.113.42",
             "dst_ip": "10.0.0.5",
             "user": "admin",

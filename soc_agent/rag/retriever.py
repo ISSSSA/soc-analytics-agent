@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class PlaybookRetriever:
+    """Извлечение релевантных фрагментов плейбуков из векторной базы Chroma."""
     def __init__(
         self,
         chroma_persist_dir: Path,

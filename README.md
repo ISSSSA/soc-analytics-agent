@@ -18,22 +18,50 @@ logs.jsonl ──▶ SecBERT embeddings (GPU) ──▶ HDBSCAN clustering
 
 ## Quickstart
 
-### Local dev (no Docker, no GPU)
+### Local run (no Docker)
+
+Agent + inference service on one machine, SecBERT loaded from a local
+checkpoint, LLM via a cloud provider. This is the development flow.
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+# 1. Environment
+python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[agent,inference,dev]"
-# Run the CPU/GPU services together on this machine:
-cp .env.example .env       # fill in ANTHROPIC_API_KEY, INFERENCE_SERVICE_API_KEY
-uvicorn inference_service.server:app --port 8001 --workers 1 &
-soc-agent index-playbooks
+
+# 2. Config — copy and fill in keys
+cp .env.example .env
+# Minimum required values in .env:
+#   SECBERT_MODEL_PATH=./models/secbert_siem    # local fine-tuned checkpoint
+#   INFERENCE_SERVICE_URL=http://localhost:8001
+#   INFERENCE_SERVICE_API_KEY=<bearer token>    # same value the service checks
+#   LLM_MODEL=openrouter/qwen/qwen3-30b-a3b      # or any LiteLLM model id
+#   OPENROUTER_API_KEY=sk-or-...                 # provider key for the chosen model
+
+# 3. Start the inference service in the background
+#    (reads SECBERT_MODEL_PATH from .env)
+.venv/bin/uvicorn inference_service.server:app --host 127.0.0.1 --port 8001 --workers 1 &
+
+# 4. Verify, index playbooks, then analyze
 soc-agent health
-soc-agent analyze input/sample.jsonl --markdown
+soc-agent index-playbooks
+soc-agent analyze data/demo_siem_100.jsonl -o reports/demo.json --markdown
 ```
 
-On CPU the inference service defaults to
-`sentence-transformers/all-MiniLM-L6-v2` (embeddings only; `/classify` will
-return 501). Override `SECBERT_MODEL_PATH` for the real checkpoint.
+**Stop the inference service** when finished:
+
+```bash
+kill %1                          # if it's still a background job in this shell
+kill "$(lsof -ti tcp:8001)"      # otherwise, by listening port
+```
+
+With a real SecBERT checkpoint at `SECBERT_MODEL_PATH`, `/classify` returns
+severity predictions (6 classes). Without one, the service falls back to
+`sentence-transformers/all-MiniLM-L6-v2` — embeddings only, and `/classify`
+returns 501.
+
+> If `.venv` is activated, `soc-agent` and `uvicorn` are on PATH. Otherwise
+> invoke them explicitly: `.venv/bin/soc-agent ...`, `.venv/bin/python -m
+> soc_agent.cli ...`.
 
 ### Docker Compose (GPU on the same host)
 

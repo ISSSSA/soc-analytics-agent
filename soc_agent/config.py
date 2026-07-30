@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     llm_max_tokens: int = Field(default=2000, ge=1, le=32000)
     llm_timeout: int = Field(default=60, ge=1, le=600)
 
+    openrouter_app_name: str | None = Field(
+        default=None,
+        description="X-Title header for OpenRouter dashboard identification.",
+    )
+    openrouter_site_url: str | None = Field(
+        default=None,
+        description="HTTP-Referer header for OpenRouter app rankings.",
+    )
+
     chroma_persist_dir: Path = Field(default=Path("./data/chroma"))
     playbooks_dir: Path = Field(default=Path("./playbooks"))
     embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2")

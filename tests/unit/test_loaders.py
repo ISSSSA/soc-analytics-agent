@@ -24,6 +24,7 @@ def _minimal_log(event_id: str = "evt-1", **overrides: Any) -> dict[str, Any]:
         "event_type": "ids_alert",
         "severity": "high",
         "description": f"event {event_id}",
+        "raw_log": f"CEF:0|Vendor|IDS|1.0|{event_id}|alert|8|src=10.0.0.1",
     }
     base.update(overrides)
     return base
